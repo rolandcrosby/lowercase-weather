@@ -59,7 +59,7 @@ def handler(event, context):
                              env['access_token'],
                              env['access_token_secret'])
     kv_store = TagKV(env['arn'])
-    last_seen = kv_store.get('LastSeen', 1)
+    last_seen = kv_store.get('LastSeen', '1')
 
     tweets = twitter_client.get_user_timeline(
         screen_name='capitalweather',
@@ -69,7 +69,8 @@ def handler(event, context):
         count=200)
     out_ids = []
     for tweet in reversed(tweets):
-        status = twitter_client.update_status(status=lc(tweet))
-        out_ids.append(status['id'])
+        if tweet['in_reply_to_status_id'] is None:
+            status = twitter_client.update_status(status=lc(tweet))
+            out_ids.append(status['id'])
         kv_store.set('LastSeen', tweets[0]['id_str'])
     return out_ids
